@@ -253,6 +253,133 @@ npm run preview     # Preview production build
 - Old camera: http://192.168.1.10 (admin / YOUR_PASSWORD)
 - New camera: http://192.168.1.18 (admin / YOUR_PASSWORD)
 
+### Running Playwright Tests
+```bash
+# Run connection test with real camera
+node debug/test-connection.mjs
+```
+
+## Development Progress
+
+### ✅ Completed (February 14, 2026)
+
+**Step 1: Project Initialization**
+- Scaffolded Vite + Vue 3 + TypeScript project
+- Configured path aliases (@/ → src/)
+- Installed dependencies (bootstrap, digest-fetch, playwright)
+- Set up git repository with proper .gitignore
+- Created debug/ directory for temporary testing files
+
+**Step 2: Core Infrastructure**
+- `src/utils/logger.ts` - Centralized logging with debug mode
+- `src/utils/parser.ts` - Response parser for key=value format
+- `src/types/camera.ts` - TypeScript type definitions
+- `src/types/digest-fetch.d.ts` - Type declarations for digest-fetch
+- `src/utils/apiClient.ts` - Camera API client with digest auth
+- `src/composables/useCamera.ts` - Singleton state management
+
+**Step 3: Connection Setup UI**
+- `src/components/ConnectionSetup.vue` - Connection form with validation
+- `src/components/StatusBar.vue` - Connection status display
+- Updated `src/App.vue` - Routing between setup and main interface
+- Bootstrap CSS integration
+- All TypeScript compilation errors resolved
+
+**Testing Infrastructure**
+- Installed Playwright for automated testing
+- Created `debug/test-connection.mjs` - Automated connection test script
+- Verified UI renders correctly and handles errors properly
+- Screenshot captured: `debug/connection-test.png`
+
+### 🔧 Issues Resolved
+
+**1. digest-fetch Browser Compatibility**
+- **Problem**: `digest-fetch` tried to import Node.js-specific `node-fetch` package
+- **Error**: `Could not resolve "node-fetch"` during Vite build
+- **Solution**:
+  - Created `src/utils/fetch-stub.ts` that uses browser's native fetch
+  - Added Vite alias: `node-fetch` → `fetch-stub.ts`
+  - Excluded `node-fetch` from optimizeDeps
+- **Status**: ✅ Fixed - Dev server runs successfully
+
+**2. TypeScript Strict Mode Errors**
+- **Problem**: Multiple TS errors in parser.ts (undefined array access)
+- **Solution**: Added null checks and proper type guards
+- **Status**: ✅ Fixed - Type checking passes
+
+### ⚠️ Current Issues
+
+**Camera Connectivity (Testing Blocked)**
+- **Problem**: Both test cameras offline/unreachable
+  - `192.168.1.10` - No route to host (100% packet loss)
+  - `192.168.1.18` - No route to host (100% packet loss)
+- **Network Scan**: Only router (192.168.1.1) and Mac (192.168.1.84) found
+- **Impact**: Cannot test actual camera communication
+- **Status**: ⏸️ Waiting for cameras to come online
+- **Workaround Options**:
+  1. Power on cameras and verify network connectivity
+  2. Implement mock mode for testing without hardware
+  3. Continue building features with assumption code is correct
+
+### 📋 TODO - Remaining Steps
+
+**Step 4: System Information Display**
+- Create `SystemInfo.vue` component
+- Display device type, serial number, firmware version
+- Test with real camera once available
+
+**Step 5: Video Preview**
+- Create `VideoPreview.vue` component
+- Implement snapshot polling (request JPEG every 500-1000ms)
+- Add refresh rate control
+- Optional: MJPEG stream support
+
+**Step 6: Settings Panels**
+- `VideoSettings.vue` - Resolution, bitrate, FPS
+- `NetworkSettings.vue` - IP, DHCP, DNS, WiFi scan
+- `ImageSettings.vue` - Brightness, contrast, exposure
+- `MotionSettings.vue` - Motion detection configuration
+- `MaintenancePanel.vue` - Reboot, logs, firmware info
+
+**Step 7: Main Application Layout**
+- Tabbed or sidebar navigation
+- Integrate all settings panels
+- Mobile-responsive layout
+
+**Step 8: Docker & Documentation**
+- Create Dockerfile (multi-stage build)
+- Create docker-compose.yaml
+- Finalize README.md
+
+**Step 9: Testing & Polish**
+- Test with real cameras (once online)
+- Handle API differences between camera models
+- Add loading states and better error messages
+- Cross-browser testing
+
+### 🚀 Current Status
+
+**Working:**
+- ✅ Dev server running at http://localhost:5173
+- ✅ Connection UI fully functional
+- ✅ Error handling working correctly
+- ✅ TypeScript compilation passing
+- ✅ Playwright test infrastructure ready
+
+**Blocked:**
+- ❌ Camera testing (hardware offline)
+- ⏸️ Further development waiting for decision:
+  - Continue building features?
+  - Add mock mode?
+  - Wait for camera availability?
+
+### 📝 Notes for Next Session
+
+1. **Test Cameras First**: Before continuing development, verify at least one camera is online and accessible
+2. **Mock Mode**: Consider implementing mock responses based on API documentation for development without hardware
+3. **CORS Issues**: May need to handle CORS if cameras don't send proper headers (test when cameras available)
+4. **Browser Compatibility**: digest-fetch works in modern browsers; test in Chrome, Firefox, Safari
+
 ## Security Considerations
 
 1. **Password Storage** - Stored in browser localStorage (not encrypted), warn users
