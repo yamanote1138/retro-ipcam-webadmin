@@ -77,13 +77,17 @@ function setNestedValue(obj: Record<string, any>, path: string, value: any): voi
 
   for (let i = 0; i < parts.length - 1; i++) {
     const part = parts[i]
+    if (!part) continue
     if (!(part in current)) {
       current[part] = {}
     }
     current = current[part]
   }
 
-  current[parts[parts.length - 1]] = value
+  const lastPart = parts[parts.length - 1]
+  if (lastPart) {
+    current[lastPart] = value
+  }
 }
 
 function setNestedArrayValue(obj: Record<string, any>, path: string, value: any): void {
@@ -93,11 +97,16 @@ function setNestedArrayValue(obj: Record<string, any>, path: string, value: any)
 
   for (let i = 0; i < parts.length; i++) {
     const part = parts[i]
+    if (!part) continue
+
     const arrayMatch = part.match(/^(\w+)\[(\d+)\]$/)
 
     if (arrayMatch) {
       // Handle array notation
-      const [, arrayName, indexStr] = arrayMatch
+      const arrayName = arrayMatch[1]
+      const indexStr = arrayMatch[2]
+      if (!arrayName || !indexStr) continue
+
       const index = parseInt(indexStr, 10)
 
       if (!(arrayName in current)) {

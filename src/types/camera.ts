@@ -53,9 +53,4 @@ export interface ApiResponse<T = any> {
 }
 
 // Connection state
-export enum ConnectionState {
-  DISCONNECTED = 'disconnected',
-  CONNECTING = 'connecting',
-  CONNECTED = 'connected',
-  ERROR = 'error'
-}
+export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error'

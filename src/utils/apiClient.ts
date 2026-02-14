@@ -6,8 +6,8 @@
 
 import DigestClient from 'digest-fetch'
 import { logger } from './logger'
-import { parseKeyValueResponse, parseJsonResponse, extractSimpleValues } from './parser'
-import type { ConnectionSettings, SystemInfo, ConfigResponse, ApiResponse } from '@/types/camera'
+import { parseKeyValueResponse, extractSimpleValues } from './parser'
+import type { ConnectionSettings, SystemInfo, ConfigResponse } from '@/types/camera'
 
 export class CameraApiClient {
   private baseUrl: string
@@ -67,38 +67,6 @@ export class CameraApiClient {
       return text
     } catch (error) {
       logger.error('CGI request failed:', error)
-      throw error
-    }
-  }
-
-  /**
-   * Make a JSON-style API request
-   */
-  private async jsonRequest(
-    path: string,
-    body?: Record<string, any>
-  ): Promise<any> {
-    const url = `${this.baseUrl}/cgi-bin/api/${path}`
-
-    logger.debug('JSON Request:', url, body)
-
-    try {
-      const response = await this.client.fetch(url, {
-        method: body ? 'POST' : 'GET',
-        headers: body ? {
-          'Content-Type': 'application/json'
-        } : undefined,
-        body: body ? JSON.stringify(body) : undefined
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
-
-      const text = await response.text()
-      return parseJsonResponse(text)
-    } catch (error) {
-      logger.error('JSON request failed:', error)
       throw error
     }
   }
