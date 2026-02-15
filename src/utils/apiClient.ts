@@ -11,18 +11,31 @@ import type { ConnectionSettings, SystemInfo, ConfigResponse } from '@/types/cam
 
 export class CameraApiClient {
   private baseUrl: string
-  private client: DigestClient
+  private client: DigestClient | null = null
   private connected: boolean = false
+  private proxyMode: boolean
+  private authHeader: string
 
   constructor(settings: ConnectionSettings) {
     const protocol = settings.secure ? 'https' : 'http'
     const port = settings.port || 80
-    this.baseUrl = `${protocol}://${settings.host}:${port}`
+    this.proxyMode = settings.proxyMode
 
-    // Initialize digest-fetch client
-    this.client = new DigestClient(settings.username, settings.password, {})
+    if (this.proxyMode) {
+      // Use proxy server for non-standard cameras
+      this.baseUrl = `http://localhost:3001/proxy/${settings.host}/${port}`
+      logger.info('Using CORS proxy mode:', this.baseUrl)
+    } else {
+      // Direct connection
+      this.baseUrl = `${protocol}://${settings.host}:${port}`
+      // Initialize digest-fetch client for direct mode
+      this.client = new DigestClient(settings.username, settings.password, {})
+      logger.debug('CameraApiClient initialized (direct mode):', this.baseUrl)
+    }
 
-    logger.debug('CameraApiClient initialized:', this.baseUrl)
+    // Prepare auth header for proxy mode
+    const credentials = btoa(`${settings.username}:${settings.password}`)
+    this.authHeader = `Basic ${credentials}`
   }
 
   /**
@@ -53,9 +66,25 @@ export class CameraApiClient {
     logger.debug('CGI Request:', url)
 
     try {
-      const response = await this.client.fetch(url, {
-        method: 'GET'
-      })
+      let response: Response
+
+      if (this.proxyMode) {
+        // Use native fetch with auth header for proxy mode
+        response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'x-camera-auth': this.authHeader
+          }
+        })
+      } else {
+        // Use digest-fetch for direct mode
+        if (!this.client) {
+          throw new Error('Digest client not initialized')
+        }
+        response = await this.client.fetch(url, {
+          method: 'GET'
+        })
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
@@ -201,9 +230,25 @@ export class CameraApiClient {
       const url = this.getSnapshotUrl(channel)
       logger.debug('Fetching snapshot:', url)
 
-      const response = await this.client.fetch(url, {
-        method: 'GET'
-      })
+      let response: Response
+
+      if (this.proxyMode) {
+        // Use native fetch with auth header for proxy mode
+        response = await fetch(url, {
+          method: 'GET',
+          headers: {
+            'x-camera-auth': this.authHeader
+          }
+        })
+      } else {
+        // Use digest-fetch for direct mode
+        if (!this.client) {
+          throw new Error('Digest client not initialized')
+        }
+        response = await this.client.fetch(url, {
+          method: 'GET'
+        })
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)

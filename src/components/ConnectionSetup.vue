@@ -16,21 +16,23 @@ const username = ref('admin')
 const password = ref('')
 const secure = ref(false)
 const debugEnabled = ref(false)
+const proxyMode = ref(false)
 
 // UI state
 const showPassword = ref(false)
 const attemptingConnection = ref(false)
 
-// Load saved settings on mount
+// Load saved settings on mount (except password for security)
 onMounted(() => {
   const saved = loadSavedSettings()
   if (saved) {
     host.value = saved.host
     port.value = saved.port
     username.value = saved.username
-    password.value = saved.password
+    // Don't load password for security - user enters it each time
     secure.value = saved.secure
     debugEnabled.value = saved.debugEnabled
+    proxyMode.value = saved.proxyMode
   }
 })
 
@@ -47,7 +49,8 @@ const handleConnect = async () => {
     username: username.value.trim(),
     password: password.value,
     secure: secure.value,
-    debugEnabled: debugEnabled.value
+    debugEnabled: debugEnabled.value,
+    proxyMode: proxyMode.value
   }
 
   const success = await connect(settings)
@@ -62,42 +65,41 @@ const handleConnect = async () => {
 
 <template>
   <div class="container">
-    <div class="row justify-content-center mt-5">
-      <div class="col-md-6 col-lg-5">
+    <div class="row justify-content-center mt-4">
+      <div class="col-md-6 col-lg-4">
         <div class="card shadow-sm">
-          <div class="card-body p-4">
-            <h2 class="card-title text-center mb-4">
+          <div class="card-body p-3">
+            <h4 class="card-title text-center mb-2">
               Retro IP Camera Admin
-            </h2>
-            <p class="text-muted text-center mb-4">
+            </h4>
+            <p class="text-muted text-center small mb-3">
               Connect to your Amcrest or compatible camera
             </p>
 
             <form @submit.prevent="handleConnect">
               <!-- Host -->
-              <div class="mb-3">
-                <label for="host" class="form-label">Camera Host/IP</label>
+              <div class="mb-2">
+                <label for="host" class="form-label small">Camera Host/IP</label>
                 <input
                   id="host"
                   v-model="host"
                   type="text"
-                  class="form-control"
-                  placeholder="192.168.1.10 or camera.local"
+                  class="form-control form-control-sm"
+                  placeholder="192.168.1.10"
                   required
                   :disabled="attemptingConnection"
                 />
-                <div class="form-text">IP address or hostname of your camera</div>
               </div>
 
               <!-- Port & Secure -->
-              <div class="row mb-3">
+              <div class="row mb-2">
                 <div class="col-8">
-                  <label for="port" class="form-label">Port</label>
+                  <label for="port" class="form-label small">Port</label>
                   <input
                     id="port"
                     v-model.number="port"
                     type="number"
-                    class="form-control"
+                    class="form-control form-control-sm"
                     min="1"
                     max="65535"
                     required
@@ -105,7 +107,7 @@ const handleConnect = async () => {
                   />
                 </div>
                 <div class="col-4 d-flex align-items-end">
-                  <div class="form-check">
+                  <div class="form-check form-check-sm">
                     <input
                       id="secure"
                       v-model="secure"
@@ -113,19 +115,19 @@ const handleConnect = async () => {
                       class="form-check-input"
                       :disabled="attemptingConnection"
                     />
-                    <label for="secure" class="form-check-label">HTTPS</label>
+                    <label for="secure" class="form-check-label small">HTTPS</label>
                   </div>
                 </div>
               </div>
 
               <!-- Username -->
-              <div class="mb-3">
-                <label for="username" class="form-label">Username</label>
+              <div class="mb-2">
+                <label for="username" class="form-label small">Username</label>
                 <input
                   id="username"
                   v-model="username"
                   type="text"
-                  class="form-control"
+                  class="form-control form-control-sm"
                   placeholder="admin"
                   required
                   autocomplete="username"
@@ -134,15 +136,15 @@ const handleConnect = async () => {
               </div>
 
               <!-- Password -->
-              <div class="mb-3">
-                <label for="password" class="form-label">Password</label>
-                <div class="input-group">
+              <div class="mb-2">
+                <label for="password" class="form-label small">Password</label>
+                <div class="input-group input-group-sm">
                   <input
                     id="password"
                     v-model="password"
                     :type="showPassword ? 'text' : 'password'"
                     class="form-control"
-                    placeholder="Enter camera password"
+                    placeholder="Enter password"
                     required
                     autocomplete="current-password"
                     :disabled="attemptingConnection"
@@ -158,9 +160,21 @@ const handleConnect = async () => {
                 </div>
               </div>
 
-              <!-- Debug Mode -->
-              <div class="mb-3">
-                <div class="form-check">
+              <!-- Options -->
+              <div class="mb-2">
+                <div class="form-check form-check-sm">
+                  <input
+                    id="proxyMode"
+                    v-model="proxyMode"
+                    type="checkbox"
+                    class="form-check-input"
+                    :disabled="attemptingConnection"
+                  />
+                  <label for="proxyMode" class="form-check-label small">
+                    Use proxy mode
+                  </label>
+                </div>
+                <div class="form-check form-check-sm">
                   <input
                     id="debug"
                     v-model="debugEnabled"
@@ -168,29 +182,28 @@ const handleConnect = async () => {
                     class="form-check-input"
                     :disabled="attemptingConnection"
                   />
-                  <label for="debug" class="form-check-label">
+                  <label for="debug" class="form-check-label small">
                     Enable debug logging
                   </label>
                 </div>
               </div>
 
               <!-- Error Message -->
-              <div v-if="errorMessage" class="alert alert-danger" role="alert">
-                <strong>Connection failed:</strong> {{ errorMessage }}
+              <div v-if="errorMessage" class="alert alert-danger alert-sm py-2 mb-2" role="alert">
+                <small><strong>Connection failed:</strong> {{ errorMessage }}</small>
               </div>
 
               <!-- Security Warning -->
-              <div class="alert alert-warning" role="alert">
-                <small>
-                  <strong>Security Note:</strong> Credentials are stored in browser localStorage
-                  (not encrypted). Use only on trusted devices.
+              <div class="alert alert-info alert-sm py-1 mb-2" role="alert">
+                <small class="text-muted">
+                  Connection settings are saved. Password is not stored.
                 </small>
               </div>
 
               <!-- Submit Button -->
               <button
                 type="submit"
-                class="btn btn-primary w-100"
+                class="btn btn-primary btn-sm w-100"
                 :disabled="attemptingConnection"
               >
                 <span v-if="attemptingConnection" class="spinner-border spinner-border-sm me-2" role="status"></span>
@@ -216,5 +229,23 @@ const handleConnect = async () => {
 
 .form-label {
   font-weight: 500;
+  margin-bottom: 0.25rem;
+  text-align: left;
+  display: block;
+}
+
+.form-check {
+  margin-bottom: 0.25rem;
+  text-align: left;
+  padding-left: 1.5em;
+}
+
+.form-check-label {
+  text-align: left;
+}
+
+.alert-sm {
+  font-size: 0.875rem;
+  text-align: left;
 }
 </style>

@@ -1,0 +1,17 @@
+services:
+  retro-ipcam-webadmin:
+    # Production deployment - builds from local Dockerfile
+    # Configure camera connection in the web UI on first launch
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: retro-ipcam-webadmin
+    restart: always
+    ports:
+      - ${PORT:-8080}:80
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s

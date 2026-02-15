@@ -10,6 +10,7 @@ export interface ConnectionSettings {
   username: string       // e.g., 'admin'
   password: string       // Stored in localStorage (not encrypted)
   debugEnabled: boolean  // Enable debug logging
+  proxyMode: boolean     // Use CORS proxy server for non-standard cameras
 }
 
 // System information from camera
