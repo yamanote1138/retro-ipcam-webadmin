@@ -20,7 +20,7 @@ This file contains project conventions, architecture decisions, and development 
 - **Node.js 20+** required
 
 ### Current Version
-v1.0.0 - Feature-complete with system info, video preview, overlay management, dark mode, and Docker support.
+v1.1.0 - Added PTZ (Pan/Tilt/Zoom) controls with preset management.
 
 ## Architecture Principles
 
@@ -78,6 +78,7 @@ v1.0.0 - Feature-complete with system info, video preview, overlay management, d
 │   │   ├── StatusBar.vue            # App header with connection status
 │   │   ├── CameraInfoPage.vue       # System information display page
 │   │   ├── OverlaysPage.vue         # Video overlays management page
+│   │   ├── PtzPage.vue              # PTZ controls and presets page
 │   │   ├── VideoPreview.vue         # Live camera snapshot display
 │   │   ├── SystemInfo.vue           # Camera details component
 │   │   └── VideoOverlaySettings.vue # Overlay control panel (tabbed)
@@ -163,21 +164,55 @@ Comprehensive control over camera text overlays with tabbed interface:
 - **Opacity conversion**: UI 0-100% → Camera API 0-255 alpha
 - **API endpoint**: `/cgi-bin/configManager.cgi?action=setConfig` with VideoWidget parameters
 
-### 5. Dark Mode
+### 5. PTZ Controls
+Comprehensive Pan/Tilt/Zoom control interface for cameras with motorized mounts:
+
+#### Directional Controls
+- **8-way movement** grid (Up, Down, Left, Right, and 4 diagonals)
+- **Mouse-based operation**: Hold button to move, release to stop
+- **Compact button layout** (180px grid, 0.4rem padding)
+- **Continuous movement** via mousedown/mouseup/mouseleave handlers
+
+#### Zoom & Focus
+- **Zoom controls**: ZoomWide (zoom out) and ZoomTele (zoom in)
+- **Focus controls**: FocusNear and FocusFar
+- **Same mouse-based operation** as directional controls
+
+#### Speed Control
+- **Adjustable speed slider** (1-8 range)
+- **Real-time speed updates** without needing to restart movement
+- **Default speed**: 4 (medium)
+
+#### Preset Management
+- **16 preset slots** with three actions per preset:
+  - **Go**: Move camera to saved position
+  - **Save**: Store current position as preset
+  - **Clear**: Delete preset (with confirmation)
+- **Status messages**: Success/error feedback for all operations
+- **Movement lock**: Prevents concurrent movements
+
+#### Technical Details
+- **API endpoint**: `/cgi-bin/ptz.cgi`
+- **Start movement**: `action=start&code=<code>&arg2=<speed>`
+- **Stop movement**: `action=stop&code=<code>`
+- **Preset commands**: GotoPreset, SetPreset, ClearPreset with `arg2=<preset_num>`
+- **Cleanup on unmount**: Automatically stops active movements when component unmounts
+
+### 6. Dark Mode
 - **Toggle button** in StatusBar with sun/moon icons
 - **Bootstrap 5 native dark mode** using `data-bs-theme="dark"` attribute
 - **System preference detection** on first load
 - **LocalStorage persistence** across sessions
 - **Comprehensive styling** for all components (cards, forms, scrollbars, buttons)
 
-### 6. Responsive Design
+### 7. Responsive Design
 - **Mobile-first** approach with Bootstrap 5 grid
-- **Tabbed navigation** between Camera Info and Overlays pages
+- **Tabbed navigation** between Camera Info, Overlays, and PTZ pages
 - **Responsive breakpoints** optimized for mobile, tablet, and desktop
 - **Touch-friendly** controls and buttons
 - **Icons** from Bootstrap Icons and Font Awesome
 
-### 7. Docker Support
+### 8. Docker Support
 - **Multi-stage Dockerfile** (Node 20 Alpine builder + Caddy 2 Alpine server)
 - **Production deployment** with `compose.yaml`
 - **Development mode** with hot reload via `compose.dev.yaml`

@@ -282,6 +282,35 @@ export class CameraApiClient {
   }
 
   /**
+   * PTZ Control
+   */
+  async ptzControl(
+    action: 'start' | 'stop',
+    code: string,
+    channel: number = 1,
+    arg1: number = 0,
+    arg2: number = 0,
+    arg3: number = 0
+  ): Promise<boolean> {
+    try {
+      const params: Record<string, string> = {
+        action,
+        channel: String(channel),
+        code,
+        arg1: String(arg1),
+        arg2: String(arg2),
+        arg3: String(arg3)
+      }
+
+      const text = await this.cgiRequest('ptz', params)
+      return text.includes('OK') || text.includes('ok')
+    } catch (error) {
+      logger.error('PTZ control failed:', error)
+      return false
+    }
+  }
+
+  /**
    * Check if connected
    */
   isConnected(): boolean {
