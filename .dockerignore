@@ -1,0 +1,41 @@
+# Dependencies
+node_modules
+npm-debug.log*
+
+# Build output
+dist
+*.local
+
+# IDE / Editor
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# Git
+.git
+.gitignore
+
+# Debug files
+debug
+
+# Documentation
+*.md
+!README.md
+
+# Resources (API docs)
+resources
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Docker
+Dockerfile
+.dockerignore
+compose*.yaml
+
+# Misc
+.DS_Store

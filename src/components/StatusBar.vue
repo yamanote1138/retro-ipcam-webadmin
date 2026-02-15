@@ -1,29 +1,32 @@
 <script setup lang="ts">
 import { useCamera } from '@/composables/useCamera'
+import { useDarkMode } from '@/composables/useDarkMode'
 
 const emit = defineEmits<{
   logout: []
 }>()
 
-const { systemInfo, connectionState, disconnect, clearSavedSettings } = useCamera()
+const { systemInfo, connectionState, disconnect } = useCamera()
+const { isDark, toggle } = useDarkMode()
 
 const handleLogout = () => {
   disconnect()
-  clearSavedSettings()
+  // Don't clear saved settings - let user reconnect easily
   emit('logout')
 }
 </script>
 
 <template>
-  <nav class="navbar navbar-light bg-light border-bottom">
+  <nav class="navbar border-bottom">
     <div class="container-fluid">
       <span class="navbar-brand mb-0 h1">
+        <i class="bi bi-camera-reels me-2"></i>
         Retro IP Camera Admin
       </span>
 
-      <div class="d-flex align-items-center">
+      <div class="d-flex align-items-center gap-2">
         <!-- Connection Status -->
-        <span class="me-3">
+        <span>
           <span
             class="badge"
             :class="{
@@ -38,12 +41,21 @@ const handleLogout = () => {
         </span>
 
         <!-- System Info -->
-        <span v-if="systemInfo.deviceType" class="text-muted me-3 d-none d-md-inline">
+        <span v-if="systemInfo.deviceType" class="text-muted d-none d-md-inline">
           {{ systemInfo.deviceType }}
           <span v-if="systemInfo.softwareVersion">
             ({{ systemInfo.softwareVersion }})
           </span>
         </span>
+
+        <!-- Dark Mode Toggle -->
+        <button
+          class="btn btn-outline-secondary btn-sm"
+          @click="toggle"
+          :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'"
+        >
+          <i :class="isDark ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill'"></i>
+        </button>
 
         <!-- Logout Button -->
         <button
@@ -51,6 +63,7 @@ const handleLogout = () => {
           @click="handleLogout"
           title="Logout"
         >
+          <i class="bi bi-box-arrow-right me-1"></i>
           Logout
         </button>
       </div>

@@ -1,18 +1,24 @@
 {
   "name": "retro-ipcam-webadmin",
   "private": true,
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host",
+    "proxy": "node proxy-server.mjs",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.2.0",
     "axios": "^1.7.9",
     "bootstrap": "^5.3.3",
+    "bootstrap-icons": "^1.13.1",
+    "cors": "^2.8.6",
     "digest-fetch": "^3.1.1",
+    "express": "^5.2.1",
+    "node-fetch": "^2.7.0",
     "vue": "^3.5.25"
   },
   "devDependencies": {
