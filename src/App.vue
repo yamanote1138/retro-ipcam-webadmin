@@ -5,10 +5,11 @@ import ConnectionSetup from '@/components/ConnectionSetup.vue'
 import StatusBar from '@/components/StatusBar.vue'
 import CameraInfoPage from '@/components/CameraInfoPage.vue'
 import OverlaysPage from '@/components/OverlaysPage.vue'
+import PtzPage from '@/components/PtzPage.vue'
 
 const { isConnected } = useCamera()
 const showSetup = ref(!isConnected.value)
-const currentPage = ref<'camera-info' | 'overlays'>('camera-info')
+const currentPage = ref<'camera-info' | 'overlays' | 'ptz'>('camera-info')
 
 const handleConnected = () => {
   showSetup.value = false
@@ -54,12 +55,23 @@ const handleLogout = () => {
               Overlays
             </button>
           </li>
+          <li class="nav-item">
+            <button
+              class="nav-link"
+              :class="{ active: currentPage === 'ptz' }"
+              @click="currentPage = 'ptz'"
+            >
+              <i class="bi bi-joystick me-2"></i>
+              PTZ
+            </button>
+          </li>
         </ul>
       </div>
 
       <!-- Page Content -->
       <CameraInfoPage v-if="currentPage === 'camera-info'" />
       <OverlaysPage v-if="currentPage === 'overlays'" />
+      <PtzPage v-if="currentPage === 'ptz'" />
     </div>
   </div>
 </template>

@@ -147,6 +147,61 @@ export function useCamera() {
     return await client.value.reboot()
   }
 
+  /**
+   * Start PTZ movement
+   */
+  const ptzStart = async (code: string, speed: number = 4): Promise<boolean> => {
+    if (!client.value) {
+      logger.warn('Cannot start PTZ: not connected')
+      return false
+    }
+    return await client.value.ptzControl('start', code, 1, 0, speed, 0)
+  }
+
+  /**
+   * Stop PTZ movement
+   */
+  const ptzStop = async (code: string): Promise<boolean> => {
+    if (!client.value) {
+      logger.warn('Cannot stop PTZ: not connected')
+      return false
+    }
+    return await client.value.ptzControl('stop', code, 1, 0, 0, 0)
+  }
+
+  /**
+   * Go to PTZ preset position
+   */
+  const ptzGotoPreset = async (presetNumber: number): Promise<boolean> => {
+    if (!client.value) {
+      logger.warn('Cannot go to preset: not connected')
+      return false
+    }
+    return await client.value.ptzControl('start', 'GotoPreset', 1, 0, presetNumber, 0)
+  }
+
+  /**
+   * Save current position as PTZ preset
+   */
+  const ptzSetPreset = async (presetNumber: number): Promise<boolean> => {
+    if (!client.value) {
+      logger.warn('Cannot set preset: not connected')
+      return false
+    }
+    return await client.value.ptzControl('start', 'SetPreset', 1, 0, presetNumber, 0)
+  }
+
+  /**
+   * Clear PTZ preset
+   */
+  const ptzClearPreset = async (presetNumber: number): Promise<boolean> => {
+    if (!client.value) {
+      logger.warn('Cannot clear preset: not connected')
+      return false
+    }
+    return await client.value.ptzControl('start', 'ClearPreset', 1, 0, presetNumber, 0)
+  }
+
   // Computed properties
   const isConnected = computed(() => connectionState.value === 'connected')
   const isConnecting = computed(() => connectionState.value === 'connecting')
@@ -173,6 +228,11 @@ export function useCamera() {
     getSnapshot,
     getConfig,
     setConfig,
-    reboot
+    reboot,
+    ptzStart,
+    ptzStop,
+    ptzGotoPreset,
+    ptzSetPreset,
+    ptzClearPreset
   }
 }
