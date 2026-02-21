@@ -20,7 +20,7 @@ This file contains project conventions, architecture decisions, and development 
 - **Node.js 20+** required
 
 ### Current Version
-v2.1.0 - Added automated Docker Hub deployment via GitHub Actions.
+v2.1.1 - Added manual workflow trigger for GitHub Actions Docker builds.
 
 ## Architecture Principles
 
