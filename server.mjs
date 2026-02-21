@@ -93,7 +93,8 @@ app.use('/proxy', async (req, res) => {
 
 // SPA fallback - serve index.html for all other routes
 // This allows Vue Router to handle client-side routing
-app.get('*', (req, res) => {
+// Note: Using middleware instead of app.get('*') for Express 5 compatibility
+app.use((req, res) => {
   res.sendFile(join(__dirname, 'dist', 'index.html'));
 });
 
