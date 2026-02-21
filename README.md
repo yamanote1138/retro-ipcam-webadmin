@@ -31,16 +31,13 @@ Older Amcrest IP cameras (and their Dahua-based counterparts) came with web inte
 # Install dependencies
 npm install
 
-# Build the Vue frontend
-npm run build
-
-# Start the server
+# Start development (runs Vite + proxy server)
 npm run dev
 ```
 
-Open http://localhost:80 in your browser, enter your camera's IP address and credentials, and start managing your camera.
+Open http://localhost:5173 in your browser, enter your camera's IP address and credentials, and start managing your camera.
 
-**Note:** Development uses the same single-server architecture as production. Rebuild with `npm run build` after making changes, or use `npm run dev:watch` in a separate terminal for auto-rebuild.
+**Note:** `npm run dev` automatically starts both the Vite dev server (with hot reload) and the proxy server in one command.
 
 ### Method 2: Docker Compose (Recommended for Production)
 
