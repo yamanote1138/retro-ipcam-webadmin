@@ -104,6 +104,18 @@ const server = app.listen(PORT, () => {
   console.log(`   Press Ctrl+C to stop`);
 });
 
+// Handle server errors (e.g., port already in use)
+server.on('error', (error) => {
+  if (error.code === 'EADDRINUSE') {
+    console.error(`\n❌ ERROR: Port ${PORT} is already in use`);
+    console.error(`   Try: lsof -i :${PORT} to find the process`);
+    console.error(`   Or set a different port: PORT=9999 npm run server\n`);
+  } else {
+    console.error(`\n❌ Server error:`, error.message);
+  }
+  process.exit(1);
+});
+
 // Graceful shutdown handler
 function shutdown(signal) {
   console.log(`\n⏹  Received ${signal}, shutting down gracefully...`);
