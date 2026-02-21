@@ -20,7 +20,7 @@ This file contains project conventions, architecture decisions, and development 
 - **Node.js 20+** required
 
 ### Current Version
-v1.2.0 - Improved server UX, mandatory proxy mode, encrypted localStorage.
+v2.0.0 - Major architectural overhaul: single Node.js server, mandatory proxy, encrypted storage.
 
 ## Architecture Principles
 
