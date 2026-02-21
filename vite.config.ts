@@ -14,7 +14,14 @@ export default defineConfig({
   },
   server: {
     host: true, // Allow network access for mobile testing
-    port: 5173
+    port: 5173,
+    proxy: {
+      // Forward /proxy/* requests to Node.js server during development
+      '/proxy': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
+      }
+    }
   },
   optimizeDeps: {
     exclude: ['node-fetch']
