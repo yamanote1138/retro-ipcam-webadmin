@@ -64,16 +64,14 @@ The app will prompt you to configure your camera connection on first launch.
 - Dahua-based IP cameras
 - Any camera implementing the Amcrest/Dahua HTTP CGI API
 
-## CORS Proxy Setup
+## Architecture
 
-Due to browser CORS restrictions, you'll need to run a simple proxy server to allow the browser to communicate with the camera:
+This application uses a **built-in CORS proxy** to communicate with cameras:
 
-```bash
-# Start the CORS proxy (runs on port 3001)
-node proxy-server.mjs
-```
+- **Frontend (Port 80)**: Vue.js web interface served by Caddy
+- **Proxy Server (Port 3001)**: Node.js service that handles CORS and camera authentication
 
-The proxy must be running while using the web interface. Configure your camera connection to use `http://localhost:3001` as the proxy URL.
+The proxy server is automatically started when you run the Docker container. All camera API requests are routed through the proxy to bypass browser CORS restrictions that older cameras don't support.
 
 ## Deployment Options
 
@@ -119,14 +117,16 @@ As of v1.0.0, all configuration happens at runtime through the web interface:
 
 1. Open the app in your browser
 2. Enter your camera details:
-   - **Proxy URL**: `http://localhost:3001` (if using the proxy server)
    - **Camera Host**: Your camera's IP address (e.g., `192.168.1.10`)
+   - **Port**: Camera HTTP port (default: `80`)
    - **Username**: Camera admin username (default: `admin`)
    - **Password**: Your camera password
    - **Debug Logging**: Enable to see detailed API calls in browser console
 3. Click "Connect"
 
-Settings are saved in your browser's localStorage and persist across sessions.
+**Note:** The CORS proxy server runs automatically inside the container on port 3001. All camera communication is routed through the proxy to handle CORS restrictions and authentication.
+
+Settings are encrypted with AES-256-GCM and saved in your browser's localStorage.
 
 ### Changing Settings
 

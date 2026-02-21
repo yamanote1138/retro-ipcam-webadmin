@@ -8,9 +8,9 @@ export interface ConnectionSettings {
   port: number           // Default: 80
   secure: boolean        // false = http, true = https
   username: string       // e.g., 'admin'
-  password: string       // Stored in localStorage (not encrypted)
+  password: string       // Never stored (used for encryption only)
   debugEnabled: boolean  // Enable debug logging
-  proxyMode: boolean     // Use CORS proxy server for non-standard cameras
+  // proxyMode: always true - cameras require CORS proxy
 }
 
 // System information from camera

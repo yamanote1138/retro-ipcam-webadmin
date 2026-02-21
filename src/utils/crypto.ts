@@ -27,7 +27,7 @@ interface EncryptableSettings {
   username: string
   secure: boolean
   debugEnabled: boolean
-  proxyMode: boolean
+  // proxyMode removed - always true
 }
 
 /**
@@ -115,8 +115,7 @@ export async function encryptSettings(
       port: settings.port,
       username: settings.username,
       secure: settings.secure,
-      debugEnabled: settings.debugEnabled,
-      proxyMode: settings.proxyMode
+      debugEnabled: settings.debugEnabled
     }
 
     // Generate random salt and IV

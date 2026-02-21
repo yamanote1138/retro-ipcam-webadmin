@@ -16,7 +16,7 @@ const username = ref('admin')
 const password = ref('')
 const secure = ref(false)
 const debugEnabled = ref(false)
-const proxyMode = ref(false)
+// proxyMode removed - always enabled
 
 // UI state
 const showPassword = ref(false)
@@ -49,7 +49,7 @@ onMounted(() => {
     // Don't load password for security - user enters it each time
     secure.value = saved.secure
     debugEnabled.value = saved.debugEnabled
-    proxyMode.value = saved.proxyMode
+    // proxyMode always enabled - no need to load
   }
 })
 
@@ -73,7 +73,7 @@ const handleUnlock = async () => {
       username.value = settings.username
       secure.value = settings.secure
       debugEnabled.value = settings.debugEnabled
-      proxyMode.value = settings.proxyMode
+      // proxyMode always enabled - no need to set
 
       // Store password for connection (not displayed)
       password.value = unlockPassword.value
@@ -102,8 +102,8 @@ const handleConnect = async () => {
     username: username.value.trim(),
     password: password.value,
     secure: secure.value,
-    debugEnabled: debugEnabled.value,
-    proxyMode: proxyMode.value
+    debugEnabled: debugEnabled.value
+    // proxyMode: always true (no longer configurable)
   }
 
   const success = await connect(settings)
@@ -275,18 +275,6 @@ const handleConnect = async () => {
 
               <!-- Options -->
               <div class="mb-2">
-                <div class="form-check form-check-sm">
-                  <input
-                    id="proxyMode"
-                    v-model="proxyMode"
-                    type="checkbox"
-                    class="form-check-input"
-                    :disabled="attemptingConnection"
-                  />
-                  <label for="proxyMode" class="form-check-label small">
-                    Use proxy mode
-                  </label>
-                </div>
                 <div class="form-check form-check-sm">
                   <input
                     id="debug"
