@@ -17,7 +17,8 @@ export class CameraApiClient {
     const port = settings.port || 80
 
     // Always use proxy server - cameras require CORS proxy
-    this.baseUrl = `http://localhost:3001/proxy/${settings.host}/${port}`
+    // Use relative URL since proxy is on same origin
+    this.baseUrl = `/proxy/${settings.host}/${port}`
     logger.info('Using CORS proxy:', this.baseUrl)
 
     // Prepare auth header for proxy mode

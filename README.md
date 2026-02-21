@@ -66,12 +66,13 @@ The app will prompt you to configure your camera connection on first launch.
 
 ## Architecture
 
-This application uses a **built-in CORS proxy** to communicate with cameras:
+This application is a **single Node.js server** that provides both the web interface and camera proxy:
 
-- **Frontend (Port 80)**: Vue.js web interface served by Caddy
-- **Proxy Server (Port 3001)**: Node.js service that handles CORS and camera authentication
+- **Frontend**: Vue.js SPA served as static files
+- **Proxy Routes**: `/proxy/*` endpoints forward requests to cameras with authentication
+- **Single Port**: Everything runs on port 80 (configurable via `PORT` env var)
 
-The proxy server is automatically started when you run the Docker container. All camera API requests are routed through the proxy to bypass browser CORS restrictions that older cameras don't support.
+All camera API requests are routed through the integrated proxy to bypass browser CORS restrictions that older cameras don't support. This eliminates the need for separate server processes.
 
 ## Deployment Options
 

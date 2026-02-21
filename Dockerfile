@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
 # ============================================
-# Builder Stage
+# Stage 1: Build Vue Frontend
 # ============================================
 FROM node:20.18.0-alpine AS builder
 
@@ -24,24 +24,23 @@ COPY public ./public
 RUN npm run build
 
 # ============================================
-# Production Stage - Caddy
+# Stage 2: Production Runtime
 # ============================================
-FROM caddy:2-alpine
+FROM node:20.18.0-alpine
 
-# Copy built static files
-COPY --from=builder /usr/src/app/dist /usr/share/caddy
+WORKDIR /app
 
-# Create a simple Caddyfile for SPA routing
-RUN echo $'{\n\
-    auto_https off\n\
-}\n\
-\n\
-:80 {\n\
-    root * /usr/share/caddy\n\
-    encode gzip\n\
-    try_files {path} /index.html\n\
-    file_server\n\
-}' > /etc/caddy/Caddyfile
+# Copy package files
+COPY package*.json ./
+
+# Install production dependencies only
+RUN npm ci --only=production
+
+# Copy built frontend from builder
+COPY --from=builder /usr/src/app/dist ./dist
+
+# Copy server
+COPY server.mjs ./
 
 # Expose HTTP port
 EXPOSE 80
@@ -49,3 +48,5 @@ EXPOSE 80
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
+
+CMD ["node", "server.mjs"]
