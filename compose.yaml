@@ -2,9 +2,15 @@ services:
   retro-ipcam-webadmin:
     # Single-server deployment with integrated proxy
     # Serves Vue.js frontend + handles camera proxy requests
-    build:
-      context: .
-      dockerfile: Dockerfile
+
+    # Option 1: Use pre-built image from Docker Hub (recommended)
+    image: yamanote1138/retro-ipcam-webadmin:latest
+
+    # Option 2: Build locally (comment out 'image' above and uncomment below)
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+
     container_name: retro-ipcam-webadmin
     restart: always
     ports:

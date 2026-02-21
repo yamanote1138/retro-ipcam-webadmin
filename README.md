@@ -114,6 +114,40 @@ The Docker image uses a multi-stage build:
 1. **Builder stage**: Node 20 Alpine compiles the Vue/TypeScript app with Vite
 2. **Production stage**: Node 20 Alpine runs Express server with built static files
 
+### Docker Hub Deployment
+
+**Automated builds via GitHub Actions** - Docker images are automatically built and pushed to Docker Hub when you create a version tag:
+
+```bash
+# Create a new version and tag
+npm version patch    # 2.0.0 -> 2.0.1 (for bug fixes)
+npm version minor    # 2.0.1 -> 2.1.0 (for new features)
+npm version major    # 2.1.0 -> 3.0.0 (for breaking changes)
+
+# Push code and tags to trigger automated build
+git push origin main --follow-tags
+```
+
+This triggers GitHub Actions workflow which:
+- Builds Docker image for linux/amd64
+- Tags image with `:latest`, version (e.g., `:v2.0.0`), and major.minor (e.g., `:2.0`)
+- Pushes to Docker Hub: `yamanote1138/retro-ipcam-webadmin`
+- Uses GitHub cache for faster builds
+
+**Pull from Docker Hub:**
+```bash
+# Use pre-built image instead of building locally
+docker pull yamanote1138/retro-ipcam-webadmin:latest
+docker run -d -p 8888:8888 yamanote1138/retro-ipcam-webadmin:latest
+
+# Or with docker compose (update compose.yaml to use image instead of build)
+```
+
+**One-time Setup** (Repository maintainers only):
+1. GitHub Secrets configured at: https://github.com/yamanote1138/retro-ipcam-webadmin/settings/secrets/actions
+   - `DOCKERHUB_USERNAME`: Docker Hub username
+   - `DOCKERHUB_TOKEN`: Docker Hub access token
+
 ## Configuration
 
 ### Runtime Configuration (No Build-Time Secrets!)

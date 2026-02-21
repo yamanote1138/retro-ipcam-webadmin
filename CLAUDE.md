@@ -224,6 +224,21 @@ Comprehensive Pan/Tilt/Zoom control interface for cameras with motorized mounts:
 - **Health checks** for container monitoring
 - **Graceful shutdown** handling (SIGINT/SIGTERM)
 
+### 9. CI/CD - GitHub Actions
+- **Automated Docker builds** triggered by version tags (`v*`)
+- **Multi-platform builds** for linux/amd64 (QNAP/NAS compatible)
+- **Docker Hub deployment** to `yamanote1138/retro-ipcam-webadmin`
+- **Automatic tagging**: `:latest`, `:v2.0.0`, `:2.0` (semantic versioning)
+- **GitHub Actions cache** for faster subsequent builds
+- **Secrets management**: `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` stored in GitHub repository secrets
+- **Workflow file**: `.github/workflows/docker-build-push.yml`
+
+**Deployment Process:**
+1. Update version: `npm version patch|minor|major`
+2. Push with tags: `git push origin main --follow-tags`
+3. GitHub Actions automatically builds and publishes to Docker Hub
+4. Users can pull pre-built image: `docker pull yamanote1138/retro-ipcam-webadmin:latest`
+
 ## Development Conventions
 
 ### Vue/TypeScript Style
