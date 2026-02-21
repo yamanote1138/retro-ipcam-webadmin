@@ -8,6 +8,7 @@
 import { ref, computed } from 'vue'
 import { CameraApiClient } from '@/utils/apiClient'
 import { logger } from '@/utils/logger'
+import { encryptSettings, decryptSettings, hasEncryptedSettings } from '@/utils/crypto'
 import type { ConnectionSettings, SystemInfo, ConnectionState } from '@/types/camera'
 
 // Singleton state
@@ -47,8 +48,18 @@ export function useCamera() {
         // Fetch system info
         await refreshSystemInfo()
 
-        // Save connection settings to localStorage
-        localStorage.setItem('camera-connection-settings', JSON.stringify(settings))
+        // Encrypt and save connection settings to localStorage
+        // Password is used for encryption but never stored
+        try {
+          const encrypted = await encryptSettings(settings, settings.password)
+          localStorage.setItem('camera-connection-settings-encrypted', encrypted)
+          // Remove old plaintext settings if they exist
+          localStorage.removeItem('camera-connection-settings')
+          logger.debug('Connection settings encrypted and saved')
+        } catch (error) {
+          logger.error('Failed to encrypt settings:', error)
+          // Continue anyway - connection succeeded
+        }
 
         return true
       } else {
@@ -75,11 +86,15 @@ export function useCamera() {
 
   /**
    * Load saved connection settings from localStorage
+   * This now only handles legacy plaintext settings (for migration)
+   * New encrypted settings must be loaded via loadEncryptedSettings()
    */
   const loadSavedSettings = (): ConnectionSettings | null => {
     try {
+      // Check for legacy plaintext settings
       const saved = localStorage.getItem('camera-connection-settings')
       if (saved) {
+        logger.warn('Found legacy plaintext settings - will be encrypted on next connection')
         return JSON.parse(saved) as ConnectionSettings
       }
     } catch (error) {
@@ -89,10 +104,36 @@ export function useCamera() {
   }
 
   /**
-   * Clear saved connection settings
+   * Load and decrypt saved connection settings using password
+   *
+   * @param password - User's password for decryption
+   * @returns Decrypted settings (without password field) or null
+   */
+  const loadEncryptedSettings = async (
+    password: string
+  ): Promise<Omit<ConnectionSettings, 'password'> | null> => {
+    try {
+      const encrypted = localStorage.getItem('camera-connection-settings-encrypted')
+      if (!encrypted) {
+        logger.debug('No encrypted settings found')
+        return null
+      }
+
+      const settings = await decryptSettings(encrypted, password)
+      logger.debug('Settings decrypted successfully')
+      return settings
+    } catch (error: any) {
+      logger.error('Failed to decrypt settings:', error)
+      throw error // Propagate to UI for user feedback
+    }
+  }
+
+  /**
+   * Clear saved connection settings (both legacy and encrypted)
    */
   const clearSavedSettings = () => {
     localStorage.removeItem('camera-connection-settings')
+    localStorage.removeItem('camera-connection-settings-encrypted')
     localStorage.removeItem('camera-debug-enabled')
   }
 
@@ -223,6 +264,8 @@ export function useCamera() {
     connect,
     disconnect,
     loadSavedSettings,
+    loadEncryptedSettings,
+    hasEncryptedSettings,
     clearSavedSettings,
     refreshSystemInfo,
     getSnapshot,

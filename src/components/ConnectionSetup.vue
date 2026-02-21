@@ -7,7 +7,7 @@ const emit = defineEmits<{
   connected: []
 }>()
 
-const { connect, loadSavedSettings, errorMessage } = useCamera()
+const { connect, loadSavedSettings, loadEncryptedSettings, hasEncryptedSettings, errorMessage } = useCamera()
 
 // Form fields
 const host = ref('')
@@ -22,8 +22,25 @@ const proxyMode = ref(false)
 const showPassword = ref(false)
 const attemptingConnection = ref(false)
 
-// Load saved settings on mount (except password for security)
+// Encryption state
+const hasEncrypted = ref(false)
+const isUnlocking = ref(false)
+const unlockPassword = ref('')
+const showUnlockPassword = ref(false)
+const unlockError = ref('')
+const settingsUnlocked = ref(false)
+
+// Load saved settings on mount
 onMounted(() => {
+  // Check if encrypted settings exist
+  hasEncrypted.value = hasEncryptedSettings()
+
+  if (hasEncrypted.value) {
+    // Encrypted settings exist - user must unlock them first
+    return
+  }
+
+  // No encrypted settings - check for legacy plaintext settings
   const saved = loadSavedSettings()
   if (saved) {
     host.value = saved.host
@@ -35,6 +52,42 @@ onMounted(() => {
     proxyMode.value = saved.proxyMode
   }
 })
+
+// Handle unlocking encrypted settings
+const handleUnlock = async () => {
+  if (!unlockPassword.value) {
+    unlockError.value = 'Password is required'
+    return
+  }
+
+  isUnlocking.value = true
+  unlockError.value = ''
+
+  try {
+    const settings = await loadEncryptedSettings(unlockPassword.value)
+
+    if (settings) {
+      // Auto-fill form with decrypted settings
+      host.value = settings.host
+      port.value = settings.port
+      username.value = settings.username
+      secure.value = settings.secure
+      debugEnabled.value = settings.debugEnabled
+      proxyMode.value = settings.proxyMode
+
+      // Store password for connection (not displayed)
+      password.value = unlockPassword.value
+
+      // Mark as unlocked
+      settingsUnlocked.value = true
+      unlockError.value = ''
+    }
+  } catch (error: any) {
+    unlockError.value = error.message || 'Failed to decrypt settings'
+  } finally {
+    isUnlocking.value = false
+  }
+}
 
 const handleConnect = async () => {
   if (!host.value || !username.value || !password.value) {
@@ -76,7 +129,67 @@ const handleConnect = async () => {
               Connect to your Amcrest or compatible camera
             </p>
 
-            <form @submit.prevent="handleConnect">
+            <!-- Unlock Form (shown if encrypted settings exist and not yet unlocked) -->
+            <form v-if="hasEncrypted && !settingsUnlocked" @submit.prevent="handleUnlock">
+              <div class="alert alert-info alert-sm py-2 mb-3" role="alert">
+                <small>
+                  <strong>Encrypted settings found.</strong><br>
+                  Enter your password to unlock saved connection settings.
+                </small>
+              </div>
+
+              <!-- Unlock Password -->
+              <div class="mb-2">
+                <label for="unlockPassword" class="form-label small">Password</label>
+                <div class="input-group input-group-sm">
+                  <input
+                    id="unlockPassword"
+                    v-model="unlockPassword"
+                    :type="showUnlockPassword ? 'text' : 'password'"
+                    class="form-control"
+                    placeholder="Enter your password"
+                    required
+                    autocomplete="current-password"
+                    :disabled="isUnlocking"
+                  />
+                  <button
+                    class="btn btn-outline-secondary"
+                    type="button"
+                    @click="showUnlockPassword = !showUnlockPassword"
+                    :disabled="isUnlocking"
+                  >
+                    {{ showUnlockPassword ? '🙈' : '👁️' }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Unlock Error -->
+              <div v-if="unlockError" class="alert alert-danger alert-sm py-2 mb-2" role="alert">
+                <small><strong>Unlock failed:</strong> {{ unlockError }}</small>
+              </div>
+
+              <!-- Unlock Button -->
+              <button
+                type="submit"
+                class="btn btn-primary btn-sm w-100 mb-2"
+                :disabled="isUnlocking"
+              >
+                <span v-if="isUnlocking" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                {{ isUnlocking ? 'Unlocking...' : 'Unlock Settings' }}
+              </button>
+
+              <!-- Manual Entry Option -->
+              <button
+                type="button"
+                class="btn btn-outline-secondary btn-sm w-100"
+                @click="hasEncrypted = false"
+              >
+                Enter Connection Details Manually
+              </button>
+            </form>
+
+            <!-- Connection Form (shown if no encrypted settings or after unlock) -->
+            <form v-else @submit.prevent="handleConnect">
               <!-- Host -->
               <div class="mb-2">
                 <label for="host" class="form-label small">Camera Host/IP</label>
@@ -193,10 +306,10 @@ const handleConnect = async () => {
                 <small><strong>Connection failed:</strong> {{ errorMessage }}</small>
               </div>
 
-              <!-- Security Warning -->
+              <!-- Security Info -->
               <div class="alert alert-info alert-sm py-1 mb-2" role="alert">
                 <small class="text-muted">
-                  Connection settings are saved. Password is not stored.
+                  <strong>Encrypted storage:</strong> Settings are encrypted with your password using AES-256-GCM.
                 </small>
               </div>
 
