@@ -43,10 +43,10 @@ COPY --from=builder /usr/src/app/dist ./dist
 COPY server.mjs ./
 
 # Expose HTTP port
-EXPOSE 80
+EXPOSE 8888
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8888/ || exit 1
 
-CMD ["node", "server.mjs"]
+CMD ["node", "--no-deprecation", "server.mjs"]

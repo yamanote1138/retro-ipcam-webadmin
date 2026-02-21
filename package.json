@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "concurrently \"npm run dev:vite\" \"npm run dev:proxy\" --names \"vite,proxy\" --prefix-colors \"cyan,magenta\"",
     "dev:vite": "vite --host",
-    "dev:proxy": "node proxy-server.mjs",
-    "server": "node server.mjs",
+    "dev:proxy": "node --no-deprecation proxy-server.mjs",
+    "server": "node --no-deprecation server.mjs",
     "build": "vue-tsc -b && vite build",
     "type-check": "vue-tsc --noEmit -p tsconfig.app.json --composite false"
   },

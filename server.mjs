@@ -8,13 +8,12 @@
  */
 
 import express from 'express';
-import fetch from 'node-fetch';
 import DigestClient from 'digest-fetch';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 const app = express();
-const PORT = process.env.PORT || 80;
+const PORT = process.env.PORT || 8888;
 
 // Get __dirname equivalent in ES modules
 const __filename = fileURLToPath(import.meta.url);
@@ -98,8 +97,28 @@ app.use((req, res) => {
   res.sendFile(join(__dirname, 'dist', 'index.html'));
 });
 
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Retro IP Camera Admin running at http://localhost:${PORT}`);
   console.log(`   Frontend: Serving Vue.js SPA from /dist`);
   console.log(`   Proxy: Handling camera requests at /proxy/*`);
+  console.log(`   Press Ctrl+C to stop`);
 });
+
+// Graceful shutdown handler
+function shutdown(signal) {
+  console.log(`\n⏹  Received ${signal}, shutting down gracefully...`);
+  server.close(() => {
+    console.log('✓ Server closed');
+    process.exit(0);
+  });
+
+  // Force shutdown after 10 seconds
+  setTimeout(() => {
+    console.error('⚠ Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+}
+
+// Handle termination signals
+process.on('SIGINT', () => shutdown('SIGINT'));   // Ctrl+C
+process.on('SIGTERM', () => shutdown('SIGTERM')); // Docker stop
