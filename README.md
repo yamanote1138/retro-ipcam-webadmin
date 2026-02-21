@@ -20,7 +20,7 @@ Older Amcrest IP cameras (and their Dahua-based counterparts) came with web inte
   - Background opacity controls for text overlays
   - Six position presets (corners and centers)
 - 📊 **System Information** - View camera model, firmware, serial number
-- ⚡ **Direct Communication** - Browser connects directly to camera (no backend server)
+- 🔄 **Integrated Proxy** - Single Node.js server handles both web UI and camera communication
 - 🐳 **Docker Support** - Easy deployment with Docker Compose
 
 ## Quick Start
@@ -45,7 +45,7 @@ Open http://localhost:5173 in your browser, enter your camera's IP address and c
 # Build and start the container
 docker compose up -d
 
-# Access at http://localhost:8080
+# Access at http://localhost:8888
 ```
 
 The app will prompt you to configure your camera connection on first launch.
@@ -72,7 +72,7 @@ This application is a **single Node.js server** that provides both the web inter
 
 - **Frontend**: Vue.js SPA served as static files
 - **Proxy Routes**: `/proxy/*` endpoints forward requests to cameras with authentication
-- **Single Port**: Everything runs on port 80 (configurable via `PORT` env var)
+- **Single Port**: Everything runs on port 8888 (configurable via `PORT` env var)
 
 All camera API requests are routed through the integrated proxy to bypass browser CORS restrictions that older cameras don't support. This eliminates the need for separate server processes.
 
@@ -80,16 +80,11 @@ All camera API requests are routed through the integrated proxy to bypass browse
 
 ### Development Mode
 ```bash
-# Build and run the server locally
-npm run build
+# Start Vite dev server + proxy server (single command)
 npm run dev
 
-# For active development (auto-rebuild on changes):
-# Terminal 1: Watch and rebuild Vue app
-npm run dev:watch
-
-# Terminal 2: Run the server
-npm run dev
+# Access at http://localhost:5173
+# Hot-reload enabled for instant feedback
 ```
 
 ### Production Build
@@ -97,25 +92,27 @@ npm run dev
 # Build static files
 npm run build
 
-# Preview production build locally
-npm run preview
+# Run production server locally
+npm run server
+
+# Access at http://localhost:8888
 ```
 
 ### Docker Production
 ```bash
-# Default: http://localhost:8080
+# Default: http://localhost:8888
 docker compose up -d
 
-# Custom port (e.g., 3000)
-PORT=3000 docker compose up -d
+# Custom port (e.g., 9999)
+PORT=9999 docker compose up -d
 
 # Stop container
 docker compose down
 ```
 
 The Docker image uses a multi-stage build:
-1. **Builder stage**: Node 20 Alpine compiles the Vue/TypeScript app
-2. **Production stage**: Caddy 2 Alpine serves the static files with gzip compression
+1. **Builder stage**: Node 20 Alpine compiles the Vue/TypeScript app with Vite
+2. **Production stage**: Node 20 Alpine runs Express server with built static files
 
 ## Configuration
 
@@ -132,9 +129,7 @@ As of v1.0.0, all configuration happens at runtime through the web interface:
    - **Debug Logging**: Enable to see detailed API calls in browser console
 3. Click "Connect"
 
-**Note:** The CORS proxy server runs automatically inside the container on port 3001. All camera communication is routed through the proxy to handle CORS restrictions and authentication.
-
-Settings are encrypted with AES-256-GCM and saved in your browser's localStorage.
+**Security:** Settings (including credentials) are encrypted with AES-256-GCM using a password-derived key (PBKDF2, 100k iterations) and saved in your browser's localStorage. The encryption password is never stored—you'll be prompted to unlock on each session.
 
 ### Changing Settings
 
@@ -167,11 +162,12 @@ Click the "Logout" button in the top-right corner to disconnect and return to th
 │   └── style.css           # Global styles and dark mode
 ├── debug/                  # Debug scripts and test files (gitignored)
 ├── public/                 # Static assets
-├── resources/              # API documentation (PDF)
-├── proxy-server.mjs        # CORS proxy server
-├── Dockerfile              # Multi-stage Docker build
+├── resources/              # API documentation
+├── server.mjs              # Production Node.js server (serves static + proxy)
+├── proxy-server.mjs        # Development-only proxy server (for Vite dev mode)
+├── Dockerfile              # Single-stage production build
 ├── compose.yaml            # Production Docker Compose
-├── compose.dev.yaml        # Development Docker Compose
+├── compose.dev.yaml        # Development Docker Compose (optional)
 └── CLAUDE.md               # Comprehensive developer documentation
 ```
 
@@ -180,18 +176,19 @@ Click the "Logout" button in the top-right corner to disconnect and return to th
 ### Available Scripts
 
 ```bash
-npm run dev          # Start Vite dev server (http://localhost:5173)
+npm run dev          # Start Vite + proxy server (http://localhost:5173)
 npm run build        # Type-check and build for production
-npm run preview      # Preview production build
+npm run server       # Run production server (http://localhost:8888)
 npm run type-check   # Run TypeScript type checking
 ```
 
 ### Development Workflow
 
-1. Make changes to Vue components in `src/`
-2. Vite hot-reloads changes automatically
-3. Use browser DevTools with debug logging enabled
-4. Test with real camera hardware when possible
+1. Run `npm run dev` (starts both Vite dev server and proxy server)
+2. Make changes to Vue components in `src/`
+3. Vite hot-reloads changes automatically at http://localhost:5173
+4. Use browser DevTools with debug logging enabled
+5. Test with real camera hardware when possible
 
 ### Code Style
 
@@ -214,10 +211,10 @@ Tested and working on:
 ## Security Considerations
 
 ### Password Storage
-- Connection settings (including passwords) are stored in browser localStorage
-- localStorage is NOT encrypted
-- Only use on trusted devices
-- Consider using a dedicated camera management network
+- Connection settings (including passwords) are **encrypted** with AES-256-GCM and stored in browser localStorage
+- Encryption key derived from your unlock password using PBKDF2 (100,000 iterations)
+- Unlock password is never stored—you must re-enter it each session
+- Still recommend using only on trusted devices
 
 ### HTTP vs HTTPS
 - Most older cameras only support HTTP (not HTTPS)
@@ -236,14 +233,15 @@ Tested and working on:
 **Issue**: "Failed to connect to camera"
 - ✅ Verify camera is powered on and connected to network
 - ✅ Check camera IP address is correct
-- ✅ Ensure proxy server is running (`node proxy-server.mjs`)
 - ✅ Verify username and password are correct
-- ✅ Check browser console for detailed error messages
+- ✅ Check browser console for detailed error messages (enable Debug Logging)
+- ✅ For development: ensure `npm run dev` is running (both Vite + proxy)
+- ✅ For production: ensure server is running on port 8888
 
 **Issue**: "CORS errors" in browser console
-- ✅ Make sure proxy server is running on port 3001
-- ✅ Use `http://localhost:3001` as the proxy URL in connection setup
-- ✅ Check that camera's HTTP API is enabled
+- ✅ In development: verify proxy server is running (automatic with `npm run dev`)
+- ✅ In production: all requests automatically routed through integrated proxy
+- ✅ Check that camera's HTTP API is enabled and accessible
 
 ### macOS Network Permissions
 

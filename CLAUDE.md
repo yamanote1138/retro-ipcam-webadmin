@@ -20,15 +20,16 @@ This file contains project conventions, architecture decisions, and development 
 - **Node.js 20+** required
 
 ### Current Version
-v1.1.0 - Added PTZ (Pan/Tilt/Zoom) controls with preset management.
+v1.2.0 - Improved server UX, mandatory proxy mode, encrypted localStorage.
 
 ## Architecture Principles
 
-### Pure Frontend SPA
-- **No backend server by default** - The browser communicates directly with cameras via HTTP
-- **Direct HTTP/HTTPS connection** - Uses digest-fetch library for authentication
-- **Optional CORS proxy** - For older cameras with non-standard network implementations
-- **Network requirement** - Browser and camera must be on the same network
+### Single Server Architecture
+- **Integrated Node.js server** - Serves static Vue app and handles camera proxy requests
+- **Mandatory CORS proxy** - All camera requests routed through `/proxy/*` endpoints
+- **HTTP Digest authentication** - Handled server-side using digest-fetch library
+- **Single port** - Everything runs on port 8888 (configurable)
+- **Network requirement** - Server and camera must be on the same network
 - **Runtime configuration** - Connection settings configured through web UI
 
 ### Key Architecture Decisions
@@ -60,13 +61,13 @@ v1.1.0 - Added PTZ (Pan/Tilt/Zoom) controls with preset management.
    - Good for older cameras with limited streaming support
    - MJPEG and RTSP support planned for future
 
-6. **CORS Proxy Mode (Optional)**
-   - Some old cameras have non-standard network implementations
-   - May not respond properly to browser requests
-   - Optional Express-based proxy server (`proxy-server.mjs`)
-   - Runs on `http://localhost:3001` when needed
-   - Handles digest auth server-side and forwards requests
-   - Enable via "Use proxy mode" checkbox in connection setup
+6. **Integrated Proxy (Mandatory)**
+   - Older cameras don't support CORS headers required by modern browsers
+   - All camera API requests routed through integrated Express proxy
+   - **Production**: Single `server.mjs` handles both static files and proxy routes
+   - **Development**: Separate `proxy-server.mjs` (port 3001) + Vite dev server (port 5173)
+   - Handles HTTP Digest auth server-side and forwards requests
+   - Proxy mode is always enabled (not configurable)
 
 ## Project Structure
 
@@ -104,8 +105,9 @@ v1.1.0 - Added PTZ (Pan/Tilt/Zoom) controls with preset management.
 │   ├── test-proxy.mjs              # Proxy server test
 │   └── get-timestamp-position.mjs  # Debug overlay position query
 ├── public/                     # Static assets
-├── proxy-server.mjs            # CORS proxy server (required for most cameras)
-├── Dockerfile                  # Multi-stage Docker build
+├── server.mjs                  # Production server (static files + proxy)
+├── proxy-server.mjs            # Development-only proxy server (port 3001)
+├── Dockerfile                  # Single-stage Docker build (Node 20 Alpine)
 ├── compose.yaml                # Production Docker Compose
 ├── compose.dev.yaml            # Development Docker Compose
 ├── .dockerignore               # Docker build exclusions
@@ -120,9 +122,10 @@ v1.1.0 - Added PTZ (Pan/Tilt/Zoom) controls with preset management.
 
 ### 1. Connection Management
 - **Runtime configuration** through web UI
-- **HTTP Digest Authentication** with digest-fetch library
-- **CORS proxy mode** for cameras with non-standard network stacks
-- **Connection persistence** via localStorage
+- **HTTP Digest Authentication** with digest-fetch library (server-side)
+- **Integrated CORS proxy** (mandatory, always enabled)
+- **Encrypted localStorage** using AES-256-GCM with PBKDF2 key derivation
+- **Password-protected unlock** on each session (password never stored)
 - **Logout functionality** to reconfigure connection
 
 ### 2. System Information Display
@@ -213,12 +216,13 @@ Comprehensive Pan/Tilt/Zoom control interface for cameras with motorized mounts:
 - **Icons** from Bootstrap Icons and Font Awesome
 
 ### 8. Docker Support
-- **Multi-stage Dockerfile** (Node 20 Alpine builder + Caddy 2 Alpine server)
-- **Production deployment** with `compose.yaml`
+- **Multi-stage Dockerfile** (Node 20 Alpine builder + Node 20 Alpine runtime)
+- **Single Node.js server** serves static files and handles proxy routes
+- **Production deployment** with `compose.yaml` (default port 8888)
 - **Development mode** with hot reload via `compose.dev.yaml`
-- **SPA routing** support (all routes serve index.html)
+- **SPA routing** support (all routes serve index.html via Express middleware)
 - **Health checks** for container monitoring
-- **Gzip compression** for optimized delivery
+- **Graceful shutdown** handling (SIGINT/SIGTERM)
 
 ## Development Conventions
 
@@ -492,7 +496,7 @@ docker compose -f compose.dev.yaml down
 - `src/utils/fetch-stub.ts` - Browser fetch adapter for digest-fetch
 
 **Step 3: Connection Setup UI** ✅
-- `src/components/ConnectionSetup.vue` - Connection form with validation and proxy mode
+- `src/components/ConnectionSetup.vue` - Connection form with validation and encrypted unlock
 - `src/components/StatusBar.vue` - Connection status, system info, dark mode toggle, logout
 - Updated `src/App.vue` - Routing between setup and main interface
 - Bootstrap 5 integration with Bootstrap Icons and Font Awesome
@@ -548,9 +552,10 @@ docker compose -f compose.dev.yaml down
   - All UI components
 
 **Step 8: Docker & Documentation** ✅
-- `Dockerfile` - Multi-stage build (Node 20 Alpine + Caddy 2 Alpine)
-- `compose.yaml` - Production deployment configuration
-- `compose.dev.yaml` - Development mode with hot reload
+- `Dockerfile` - Multi-stage build (Node 20 Alpine builder + Node 20 Alpine runtime)
+- `server.mjs` - Production Express server (static files + proxy routes)
+- `compose.yaml` - Production deployment (port 8888)
+- `compose.dev.yaml` - Development mode with Vite hot reload
 - `.dockerignore` - Build optimization
 - `README.md` - Comprehensive user documentation
 - `CLAUDE.md` - Complete developer documentation (this file)
